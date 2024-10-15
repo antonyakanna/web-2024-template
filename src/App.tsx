@@ -3,7 +3,6 @@ import useLocalStorageState from "use-local-storage-state";
 import styled from "styled-components";
 import {
   Typography,
-  TextField,
   Button,
   List,
   ListItem,
@@ -19,7 +18,6 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
-import RestaurantIcon from "@mui/icons-material/Restaurant";
 
 interface Ingredient {
   name: string;
@@ -69,18 +67,6 @@ const StyledListItem = styled(ListItem)`
     &:hover {
       transform: translateY(-3px);
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    }
-  }
-`;
-
-const StyledTextField = styled(TextField)`
-  && {
-    margin-bottom: 1rem;
-    background-color: rgba(255, 255, 255, 0.7);
-    border-radius: 10px;
-
-    .MuiOutlinedInput-root {
-      border-radius: 10px;
     }
   }
 `;
