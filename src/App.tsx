@@ -10,164 +10,256 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   IconButton,
-  Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Slider,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import AddIcon from "@mui/icons-material/Add";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
 
-interface Todo {
+interface Ingredient {
+  name: string;
+  amount: number;
+  unit: string;
+}
+
+interface Recipe {
   id: number;
-  text: string;
-  done: boolean;
+  name: string;
+  ingredients: Ingredient[];
+  instructions: string;
+  portions: number;
 }
 
 const AppContainer = styled.div`
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+  border-radius: 20px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 `;
 
 const StyledButton = styled(Button)`
   && {
     margin-top: 1rem;
+    background: linear-gradient(45deg, #ff9a9e 30%, #fad0c4 90%);
+    border-radius: 15px;
+    box-shadow: 0 3px 5px 2px rgba(255, 105, 135, .3);
+    color: white;
+    height: 48px;
+    padding: 0 30px;
+    text-transform: none;
+    font-weight: bold;
   }
 `;
 
-const StyledListItemText = styled(ListItemText)<{ done: boolean }>`
+const StyledListItem = styled(ListItem)`
   && {
-    text-decoration: ${(props) => (props.done ? "line-through" : "none")};
+    background-color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 10px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+  }
+`;
+
+const StyledTextField = styled(TextField)`
+  && {
+    margin-bottom: 1rem;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+
+    .MuiOutlinedInput-root {
+      border-radius: 10px;
+    }
   }
 `;
 
 function App() {
-  const [todos, setTodos] = useLocalStorageState<Todo[]>("todos", {
+  const [recipes, setRecipes] = useLocalStorageState<Recipe[]>("recipes", {
     defaultValue: [],
   });
-  const [newTodo, setNewTodo] = useState("");
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editText, setEditText] = useState(""); // Add this line
+  const [openDialog, setOpenDialog] = useState(false);
+  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+  const [newPortions, setNewPortions] = useState(2);
 
   useEffect(() => {
-    if (todos.length === 0) {
-      const boilerplateTodos = [
-        { id: 1, text: "Install Node.js", done: false },
-        { id: 2, text: "Install Cursor IDE", done: false },
-        { id: 3, text: "Log into Github", done: false },
-        { id: 4, text: "Fork a repo", done: false },
-        { id: 5, text: "Make changes", done: false },
-        { id: 6, text: "Commit", done: false },
-        { id: 7, text: "Deploy", done: false },
+    if (recipes.length === 0) {
+      const boilerplateRecipes: Recipe[] = [
+        {
+          id: 1,
+          name: "Quinoa Buddha Bowl",
+          ingredients: [
+            { name: "Quinoa", amount: 1, unit: "cup" },
+            { name: "Chickpeas", amount: 1, unit: "can" },
+            { name: "Avocado", amount: 1, unit: "piece" },
+            { name: "Kale", amount: 2, unit: "cups" },
+            { name: "Cherry tomatoes", amount: 1, unit: "cup" },
+          ],
+          instructions: "Cook quinoa. Roast chickpeas. Combine all ingredients in a bowl.",
+          portions: 2,
+        },
+        {
+          id: 2,
+          name: "Vegan Lentil Curry",
+          ingredients: [
+            { name: "Red lentils", amount: 1, unit: "cup" },
+            { name: "Coconut milk", amount: 1, unit: "can" },
+            { name: "Onion", amount: 1, unit: "piece" },
+            { name: "Garlic", amount: 3, unit: "cloves" },
+            { name: "Curry powder", amount: 2, unit: "tbsp" },
+          ],
+          instructions: "Sauté onion and garlic. Add lentils, coconut milk, and curry powder. Simmer until lentils are tender.",
+          portions: 4,
+        },
+        {
+          id: 3,
+          name: "Zucchini Noodles with Pesto",
+          ingredients: [
+            { name: "Zucchini", amount: 2, unit: "large" },
+            { name: "Basil leaves", amount: 2, unit: "cups" },
+            { name: "Pine nuts", amount: 1/4, unit: "cup" },
+            { name: "Garlic", amount: 2, unit: "cloves" },
+            { name: "Olive oil", amount: 1/3, unit: "cup" },
+          ],
+          instructions: "Spiralize zucchini. Blend basil, pine nuts, garlic, and olive oil for pesto. Toss zucchini noodles with pesto.",
+          portions: 2,
+        },
+        {
+          id: 4,
+          name: "Stuffed Bell Peppers",
+          ingredients: [
+            { name: "Bell peppers", amount: 4, unit: "large" },
+            { name: "Quinoa", amount: 1, unit: "cup" },
+            { name: "Black beans", amount: 1, unit: "can" },
+            { name: "Corn", amount: 1, unit: "cup" },
+            { name: "Salsa", amount: 1/2, unit: "cup" },
+          ],
+          instructions: "Cook quinoa. Mix with black beans, corn, and salsa. Stuff mixture into bell peppers and bake.",
+          portions: 4,
+        },
+        {
+          id: 5,
+          name: "Cauliflower Fried Rice",
+          ingredients: [
+            { name: "Cauliflower", amount: 1, unit: "head" },
+            { name: "Carrots", amount: 2, unit: "medium" },
+            { name: "Peas", amount: 1, unit: "cup" },
+            { name: "Soy sauce", amount: 2, unit: "tbsp" },
+            { name: "Ginger", amount: 1, unit: "tbsp" },
+          ],
+          instructions: "Rice cauliflower in a food processor. Stir-fry with carrots, peas, soy sauce, and ginger.",
+          portions: 4,
+        },
       ];
-      setTodos(boilerplateTodos);
+      setRecipes(boilerplateRecipes);
     }
-  }, [todos, setTodos]);
+  }, [recipes, setRecipes]);
 
-  const handleAddTodo = () => {
-    if (newTodo.trim() !== "") {
-      setTodos([
-        ...todos,
-        { id: Date.now(), text: newTodo.trim(), done: false },
-      ]);
-      setNewTodo("");
-    }
+  const handleOpenDialog = (recipe: Recipe | null) => {
+    setEditingRecipe(recipe);
+    setNewPortions(recipe ? recipe.portions : 2);
+    setOpenDialog(true);
   };
 
-  const handleDeleteTodo = (id: number) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setEditingRecipe(null);
   };
 
-  const handleToggleTodo = (id: number) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, done: !todo.done } : todo
-      )
-    );
-  };
-
-  const handleEditTodo = (id: number) => {
-    setEditingId(id);
-    const todoToEdit = todos.find((todo) => todo.id === id);
-    if (todoToEdit) {
-      setEditText(todoToEdit.text);
+  const handleSaveRecipe = () => {
+    if (editingRecipe) {
+      const updatedRecipe = {
+        ...editingRecipe,
+        portions: newPortions,
+        ingredients: editingRecipe.ingredients.map(ingredient => ({
+          ...ingredient,
+          amount: (ingredient.amount * newPortions) / editingRecipe.portions
+        }))
+      };
+      setRecipes(recipes.map(r => r.id === updatedRecipe.id ? updatedRecipe : r));
+    } else {
+      // Add new recipe logic here
     }
+    handleCloseDialog();
   };
 
-  const handleUpdateTodo = (id: number) => {
-    if (editText.trim() !== "") {
-      setTodos(
-        todos.map((todo) =>
-          todo.id === id ? { ...todo, text: editText.trim() } : todo
-        )
-      );
-    }
-    setEditingId(null);
-    setEditText("");
+  const handleDeleteRecipe = (id: number) => {
+    setRecipes(recipes.filter(recipe => recipe.id !== id));
   };
 
   return (
     <AppContainer>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Todo List
+      <Typography variant="h4" component="h1" gutterBottom style={{ color: "#444" }}>
+        Plant-Based Recipe Book
       </Typography>
-      <TextField
-        fullWidth
-        variant="outlined"
-        label="New Todo"
-        value={newTodo}
-        onChange={(e) => setNewTodo(e.target.value)}
-        onKeyPress={(e) => e.key === "Enter" && handleAddTodo()}
-        autoFocus // Add this line to enable autofocus
-      />
       <StyledButton
         variant="contained"
-        color="primary"
-        fullWidth
-        onClick={handleAddTodo}
+        startIcon={<AddIcon />}
+        onClick={() => handleOpenDialog(null)}
       >
-        Add Todo
+        Add New Recipe
       </StyledButton>
       <List>
-        {todos.map((todo) => (
-          <ListItem key={todo.id} dense>
-            <Checkbox
-              edge="start"
-              checked={todo.done}
-              onChange={() => handleToggleTodo(todo.id)}
+        {recipes.map((recipe) => (
+          <StyledListItem key={recipe.id}>
+            <ListItemText
+              primary={recipe.name}
+              secondary={`Portions: ${recipe.portions}`}
             />
-            {editingId === todo.id ? (
-              <TextField
-                fullWidth
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                onBlur={() => handleUpdateTodo(todo.id)}
-                onKeyPress={(e) =>
-                  e.key === "Enter" && handleUpdateTodo(todo.id)
-                }
-                autoFocus
-              />
-            ) : (
-              <StyledListItemText primary={todo.text} done={todo.done} />
-            )}
             <ListItemSecondaryAction>
-              <IconButton
-                edge="end"
-                aria-label="edit"
-                onClick={() => handleEditTodo(todo.id)}
-              >
+              <IconButton edge="end" aria-label="edit" onClick={() => handleOpenDialog(recipe)}>
                 <EditIcon />
               </IconButton>
-              <IconButton
-                edge="end"
-                aria-label="delete"
-                onClick={() => handleDeleteTodo(todo.id)}
-              >
+              <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteRecipe(recipe.id)}>
                 <DeleteIcon />
               </IconButton>
             </ListItemSecondaryAction>
-          </ListItem>
+          </StyledListItem>
         ))}
       </List>
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>{editingRecipe ? "Edit Recipe" : "Add New Recipe"}</DialogTitle>
+        <DialogContent>
+          {editingRecipe && (
+            <>
+              <Typography gutterBottom>Adjust Portions</Typography>
+              <Slider
+                value={newPortions}
+                onChange={(_, newValue) => setNewPortions(newValue as number)}
+                aria-labelledby="portions-slider"
+                valueLabelDisplay="auto"
+                step={1}
+                marks
+                min={1}
+                max={10}
+              />
+              <Typography variant="body2" color="textSecondary">
+                Ingredients will be adjusted automatically
+              </Typography>
+            </>
+          )}
+          {/* Add more fields for editing or creating new recipes */}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleSaveRecipe} color="primary">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
     </AppContainer>
   );
 }
